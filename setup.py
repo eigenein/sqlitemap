@@ -14,7 +14,7 @@ setup(
     zip_safe=True,
     install_requires=[],
     extras_require={
-        'dev': ['flake8', 'isort', 'pytest', 'pytest-cov', 'coveralls'],
+        'dev': ['flake8', 'isort', 'pytest', 'pytest-cov', 'coveralls', 'ujson', 'orjson'],
         'ujson': ['ujson'],
         'orjson': ['orjson'],
     },
@@ -24,7 +24,6 @@ setup(
         'Operating System :: OS Independent',
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: Libraries :: Python Modules',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'License :: OSI Approved :: MIT License',
