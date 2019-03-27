@@ -98,7 +98,8 @@ class Connection(ConnectionWrapper, AbstractContextManager, MutableMapping[str, 
         with closing(self.connection.execute('''
             SELECT name FROM sqlite_master WHERE type = 'table'
         ''')) as cursor:
-            return (name for name, in cursor.fetchall())
+            for name, in cursor:
+                yield name
 
     def __getitem__(self, name: str) -> Collection:
         """
