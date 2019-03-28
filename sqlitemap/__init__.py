@@ -60,7 +60,7 @@ class Collection(ConnectionWrapper, AbstractContextManager, MutableMapping[str, 
     def __setitem__(self, key: str, value: Any) -> None:
         pass  # TODO
 
-    def __enter__(self) -> Collection:
+    def __enter__(self) -> 'Collection':
         """
         Enter a transaction.
         """
