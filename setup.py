@@ -14,7 +14,7 @@ setup(
     zip_safe=True,
     install_requires=[],
     extras_require={
-        'dev': ['flake8', 'isort', 'pytest', 'pytest-cov', 'coveralls', 'ujson', 'orjson'],
+        'dev': ['flake8', 'isort', 'pytest', 'pytest-cov', 'coveralls', 'ujson', 'orjson', 'twine'],
         'ujson': ['ujson'],
         'orjson': ['orjson'],
     },
