@@ -2,8 +2,6 @@
 Automatically detects the best way to serialize values to JSON.
 """
 
-from __future__ import annotations
-
 import json
 from typing import Any, Callable
 
