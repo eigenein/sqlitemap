@@ -1,11 +1,13 @@
-from typing import Iterable
-
 from pytest import fixture
 
-from sqlitemap import Connection
+from sqlitemap import Collection, Connection
 
 
 @fixture
-def connection() -> Iterable[Connection]:
-    with Connection(':memory:') as sqlite:
-        yield sqlite
+def connection() -> Connection:
+    return Connection(':memory:')
+
+
+@fixture
+def collection(connection: Connection) -> Collection:
+    return connection['test']
