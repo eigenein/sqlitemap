@@ -61,23 +61,7 @@ connection = Connection(':memory:', dumps_=custom_dumps, loads_=custom_loads)
 
 `Collection` also implements the [context manager](https://docs.python.org/3/library/stdtypes.html#typecontextmanager) interface to make a transaction, and `MutableMapping[str, Any]`:
 
-```python
-assert len(collection) == 0
-collection['foo'] = 'bar'
-assert len(collection) == 1
-```
-
-```python
-assert list(collection) == []
-collection['foo'] = 'bar'
-assert list(collection) == ['foo']
-```
-
-```python
-assert collection.values() == []
-collection['foo'] = 'bar'
-assert collection.values() == ['bar']
-```
+### Setting an item
 
 ```python
 with raises(KeyError):
@@ -88,6 +72,26 @@ collection['foo'] = 'qux'
 assert collection['foo'] == 'qux'
 ```
 
+`key` column is a primary key.
+
+### Retrieving keys
+
+```python
+assert list(collection) == []
+collection['foo'] = 'bar'
+assert list(collection) == ['foo']
+```
+
+### Retrieving values
+
+```python
+assert collection.values() == []
+collection['foo'] = 'bar'
+assert collection.values() == ['bar']
+```
+
+### Deleting an item
+
 ```python
 with raises(KeyError):
     del collection['foo']
@@ -96,8 +100,6 @@ del collection['foo']
 with raises(KeyError):
     del collection['foo']
 ```
-
-`key` column is a primary key.
 
 ### Using slices
 
