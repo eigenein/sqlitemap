@@ -2,18 +2,16 @@
 Dictionary interface to an SQLite database.
 """
 
-import re
 import sqlite3
 from abc import ABC
 from contextlib import AbstractContextManager, closing
 from os import PathLike
-from typing import Any, Callable, Iterator, List, MutableMapping, Pattern, Tuple, TypeVar, Union, cast
+from typing import Any, Callable, Iterator, List, MutableMapping, Tuple, TypeVar, Union, cast
 
+from sqlitemap.constants import table_name_re
 from sqlitemap.json import dumps, loads
 
 T = TypeVar('T')
-
-table_name_re: Pattern = re.compile(r'[a-zA-Z\d_]+')
 
 
 class ConnectionWrapper(AbstractContextManager, ABC):
@@ -71,7 +69,7 @@ class Collection(ConnectionWrapper, MutableMapping[str, Any]):
         self.name = name
         with closing(connection.cursor()) as cursor:
             cursor.execute(f'''
-                CREATE TABLE IF NOT EXISTS `{name}` (
+                CREATE TABLE IF NOT EXISTS "{name}" (
                     `key` TEXT NOT NULL PRIMARY KEY,
                     `value` BLOB NOT NULL
                 )
@@ -81,7 +79,7 @@ class Collection(ConnectionWrapper, MutableMapping[str, Any]):
         """
         Get size of the collection.
         """
-        with closing(self.connection.execute(f'SELECT COUNT(1) FROM `{self.name}`')) as cursor:
+        with closing(self.connection.execute(f'SELECT COUNT(1) FROM "{self.name}"')) as cursor:
             return cursor.fetchone()[0]
 
     def __iter__(self) -> Iterator[str]:
@@ -89,7 +87,7 @@ class Collection(ConnectionWrapper, MutableMapping[str, Any]):
         Iterate over the collection keys.
         This is not really effective since it keeps the entire key set in memory.
         """
-        with closing(self.connection.execute(f'SELECT `key` from `{self.name}`')) as cursor:
+        with closing(self.connection.execute(f'SELECT `key` from "{self.name}"')) as cursor:
             return iter([key for key, in cursor])
 
     def values(self) -> List[Any]:
@@ -97,7 +95,7 @@ class Collection(ConnectionWrapper, MutableMapping[str, Any]):
         Get the collection values.
         This is not really effective since it keeps the entire value set in memory.
         """
-        with closing(self.connection.execute(f'SELECT `value` from `{self.name}`')) as cursor:
+        with closing(self.connection.execute(f'SELECT `value` from "{self.name}"')) as cursor:
             return [self.loads(value) for value, in cursor]
 
     def __getitem__(self, key: Union[str, slice]) -> Any:
@@ -114,7 +112,7 @@ class Collection(ConnectionWrapper, MutableMapping[str, Any]):
                 return [self.loads(value) for value, in cursor]
 
         # Single item flow.
-        with closing(self.connection.execute(f'SELECT `value` FROM `{self.name}` WHERE `key` = ?', [key])) as cursor:
+        with closing(self.connection.execute(f'SELECT `value` FROM "{self.name}" WHERE `key` = ?', [key])) as cursor:
             row = cursor.fetchone()
             if row is None:
                 raise KeyError(key)
@@ -134,7 +132,7 @@ class Collection(ConnectionWrapper, MutableMapping[str, Any]):
 
         # Single item flow.
         with closing(self.connection.cursor()) as cursor:
-            cursor.execute(f'DELETE FROM `{self.name}` WHERE `key` = ?', [key])
+            cursor.execute(f'DELETE FROM "{self.name}" WHERE `key` = ?', [key])
             cursor.execute('SELECT changes()')
             if not cursor.fetchone()[0]:
                 raise KeyError(key)
@@ -145,7 +143,7 @@ class Collection(ConnectionWrapper, MutableMapping[str, Any]):
         """
         with closing(self.connection.cursor()) as cursor:
             cursor.execute(
-                f'INSERT OR REPLACE INTO `{self.name}` (`key`, `value`) VALUES (?, ?)',
+                f'INSERT OR REPLACE INTO "{self.name}" (`key`, `value`) VALUES (?, ?)',
                 [key, self.dumps(value)],
             )
 
@@ -153,7 +151,7 @@ class Collection(ConnectionWrapper, MutableMapping[str, Any]):
         """
         Makes query clause for the slice-based operations.
         """
-        query = [f'FROM `{self.name}` WHERE 1']
+        query = [f'FROM "{self.name}" WHERE 1']
         parameters: List[str] = []
         if key.start is not None:
             query.append('AND `key` >= ?')
@@ -218,7 +216,7 @@ class Connection(ConnectionWrapper, MutableMapping[str, Collection]):
             raise ValueError(f'incorrect table name: {name}')
         try:
             with closing(self.connection.cursor()) as cursor:
-                cursor.execute(f'DROP TABLE `{name}`')
+                cursor.execute(f'DROP TABLE "{name}"')
         except sqlite3.OperationalError as e:
             raise KeyError(name) from e
 

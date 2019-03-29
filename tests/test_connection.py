@@ -1,6 +1,7 @@
 from sqlite3 import ProgrammingError
 
-from pytest import raises
+from pytest import mark, raises
+from tests.constants import bad_table_names, good_table_names
 
 from sqlitemap import Connection
 
@@ -19,20 +20,28 @@ def test_iter(connection: Connection):
     assert list(connection) == ['collection']
 
 
-def test_delitem(connection: Connection):
-    connection.get('collection')
-    del connection['collection']
+@mark.parametrize('name', good_table_names)
+def test_delitem(connection: Connection, name: str):
+    connection.get(name)
+    del connection[name]
     assert not list(connection)
 
 
-def test_getitem_value_error(connection: Connection):
-    with raises(ValueError):
-        connection.get('); drop tables --')
+@mark.parametrize('name', good_table_names)
+def test_getitem(connection: Connection, name: str):
+    connection.get(name)
 
 
-def test_delitem_value_error(connection: Connection):
+@mark.parametrize('name', bad_table_names)
+def test_getitem_value_error(connection: Connection, name: str):
     with raises(ValueError):
-        del connection['); drop tables --']
+        connection.get(name)
+
+
+@mark.parametrize('name', bad_table_names)
+def test_delitem_value_error(connection: Connection, name: str):
+    with raises(ValueError):
+        del connection[name]
 
 
 def test_delitem_missing(connection: Connection):
