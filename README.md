@@ -22,10 +22,10 @@ You create an instance of `Connection` as if it was a normal [`sqlite3.connect`]
 ```python
 from sqlitemap import Connection
 
-connection = Connection(':memory:')
+connection = Connection(':memory:', ...)
 ```
 
-It implements the context manager interface, so you use `with` to make a transaction as if it was an `sqlite3.Connection`. And it implements `MutableMapping[str, Collection]`, except for `__setitem__`. So you can imagine a `Connection` as a dictionary of collections altogether with their names and do virtually everything you could do with a normal `dict`:
+It implements the [context manager](https://docs.python.org/3/library/stdtypes.html#typecontextmanager) interface, so you use `with` to make a transaction as if it was an [`sqlite3.Connection`](https://docs.python.org/3/library/sqlite3.html#sqlite3.Connection). And it implements `MutableMapping[str, Collection]`, except for `__setitem__`. So you can imagine a `Connection` as a dictionary of collections altogether with their [names](https://stackoverflow.com/questions/3694276/what-are-valid-table-names-in-sqlite) and do virtually everything you could do with a normal [`dict`](https://docs.python.org/3.7/library/stdtypes.html#dict):
 
 ```python
 from sqlitemap import Collection
@@ -57,8 +57,78 @@ Otherwise, you can specify any custom `Callable[[Any], bytes]` for encoder and `
 connection = Connection(':memory:', dumps_=custom_dumps, loads_=custom_loads)
 ``` 
 
-TODO
-
 ## `Collection`
 
-TODO
+`Collection` also implements the [context manager](https://docs.python.org/3/library/stdtypes.html#typecontextmanager) interface to make a transaction, and `MutableMapping[str, Any]`:
+
+```python
+assert len(collection) == 0
+collection['foo'] = 'bar'
+assert len(collection) == 1
+```
+
+```python
+assert list(collection) == []
+collection['foo'] = 'bar'
+assert list(collection) == ['foo']
+```
+
+```python
+assert collection.values() == []
+collection['foo'] = 'bar'
+assert collection.values() == ['bar']
+```
+
+```python
+with raises(KeyError):
+    _ = collection['foo']
+collection['foo'] = 'bar'
+assert collection['foo'] == 'bar'
+collection['foo'] = 'qux'
+assert collection['foo'] == 'qux'
+```
+
+```python
+with raises(KeyError):
+    del collection['foo']
+collection['foo'] = 42
+del collection['foo']
+with raises(KeyError):
+    del collection['foo']
+```
+
+`key` column is a primary key.
+
+### Using slices
+
+`Collection.__getitem__` and `Collection.__setitem__` also support [slices](https://docs.python.org/3/library/functions.html#slice) as their arguments. Slice `start` is then converted to `key >= start` clause, `stop` to `key < stop` and `step` to `key LIKE step`. All of these are combined with the `AND` operator. `Collection.__getitem__` also applies `ORDER BY key` clause, so it's possible to make some more sophisticated queries:
+
+```python
+collection['bar'] = 1
+collection['foo'] = 2
+collection['quw'] = 3
+collection['qux'] = 4
+collection['quy'] = 5
+collection['quz'] = 6
+assert collection['foo':] == [2, 3, 4, 5, 6]
+assert collection[:'foo'] == [1]
+assert collection[::'qu%'] == [3, 4, 5, 6]
+assert collection['bar':'quz':'qu%'] == [3, 4, 5]
+```
+
+The same also works with `del collection [...]`. It deletes the rows that would be selected with the corresponding `__getitem__` call:
+
+```python
+collection['bar'] = 1
+collection['foo'] = 2
+collection['quw'] = 3
+collection['qux'] = 4
+collection['quy'] = 5
+collection['quz'] = 6
+del collection['bar':'quz':'qu%']
+assert list(collection) == ['bar', 'foo', 'quz']
+```
+
+## Controlling transactions
+
+`sqlitemap` does nothing special to control transactions. For that refer to [the standard library documentation](https://docs.python.org/3/library/sqlite3.html#controlling-transactions).
