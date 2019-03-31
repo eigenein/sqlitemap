@@ -14,9 +14,19 @@ setup(
     zip_safe=True,
     install_requires=[],
     extras_require={
-        'dev': ['flake8', 'isort', 'pytest', 'pytest-cov', 'coveralls', 'ujson', 'orjson', 'twine'],
         'ujson': ['ujson'],
         'orjson': ['orjson'],
+        'dev': [
+            'flake8',
+            'isort',
+            'pytest',
+            'pytest-cov',
+            'coveralls',
+            'ujson',
+            'orjson',
+            'twine',
+            'mypy',
+        ],
     },
     classifiers=[
         'Development Status :: 4 - Beta',
