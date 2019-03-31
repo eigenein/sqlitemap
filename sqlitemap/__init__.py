@@ -180,6 +180,9 @@ class Connection(ConnectionWrapper, MutableMapping[str, Collection]):
         **kwargs: Any,
     ):
         super().__init__(dumps_, loads_)
+        if isinstance(database, PathLike):
+            # `sqlite3.connect` in Python 3.6 doesn't accept `PathLike`.
+            database = database.__fspath__()
         self.connection = sqlite3.connect(database, **kwargs)
 
     def __len__(self) -> int:
