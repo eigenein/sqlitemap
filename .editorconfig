@@ -7,6 +7,9 @@ insert_final_newline = true
 indent_style = space
 indent_size = 4
 
+[Makefile]
+indent_style = tab
+
 [*.py]
 line_length = 119
 default_section = THIRDPARTY

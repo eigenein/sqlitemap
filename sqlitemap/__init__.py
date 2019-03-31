@@ -11,7 +11,7 @@ from typing import Any, Callable, Iterator, List, MutableMapping, Tuple, TypeVar
 from sqlitemap.constants import table_name_re
 from sqlitemap.json import dumps, loads
 
-T = TypeVar('T')
+T = TypeVar('T', bound='ConnectionWrapper')
 
 
 class ConnectionWrapper(AbstractContextManager, ABC):
@@ -90,7 +90,8 @@ class Collection(ConnectionWrapper, MutableMapping[str, Any]):
         with closing(self.connection.execute(f'SELECT `key` from "{self.name}"')) as cursor:
             return iter([key for key, in cursor])
 
-    def values(self) -> List[Any]:
+    # noinspection PyTypeHints
+    def values(self) -> List[Any]:  # type: ignore
         """
         Get the collection values.
         This is not really effective since it keeps the entire value set in memory.

@@ -6,9 +6,6 @@ python:
 install:
   - pip install --upgrade -e .[dev]
 script:
-  - pytest --cov-report term-missing --cov sqlitemap
-  - flake8 sqlitemap tests
-  - isort -rc -c --diff sqlitemap tests
-  # TODO: mypy
+  - make test
 after_success:
   - coveralls

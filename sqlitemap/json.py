@@ -14,8 +14,8 @@ def stdlib_dumps(value: Any) -> bytes:
     return json.dumps(value).encode()
 
 
-loads = stdlib_loads
-dumps = stdlib_dumps
+loads: Callable[[bytes], Any] = stdlib_loads
+dumps: Callable[[Any], bytes] = stdlib_dumps
 
 try:
     import ujson
@@ -32,7 +32,7 @@ else:
     dumps = ujson_dumps
 
 try:
-    import orjson
+    import orjson  # type: ignore
 except ImportError:
     pass
 else:
