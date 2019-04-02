@@ -6,7 +6,7 @@ import sqlite3
 from abc import ABC
 from contextlib import AbstractContextManager, closing
 from os import PathLike
-from typing import Any, Callable, Iterator, List, MutableMapping, Tuple, TypeVar, Union, cast
+from typing import Any, Callable, Dict, Iterator, List, MutableMapping, Tuple, TypeVar, Union, cast
 
 from sqlitemap.constants import table_name_re
 from sqlitemap.json import dumps, loads
@@ -180,11 +180,12 @@ class Connection(ConnectionWrapper, MutableMapping[str, Collection]):
         **kwargs: Any,
     ):
         super().__init__(dumps_, loads_)
-        if isinstance(database, PathLike):
-            # `sqlite3.connect` in Python 3.6 doesn't accept `PathLike`.
-            self.connection = sqlite3.connect(database.__fspath__(), **kwargs)
-        else:
-            self.connection = sqlite3.connect(database, **kwargs)
+        self.connection = sqlite3.connect(
+            # `sqlite3.connect` in Python 3.6 doesn't accept a `PathLike` object.
+            database.__fspath__() if isinstance(database, PathLike) else database,
+            **kwargs,
+        )
+        self.cache: Dict[str, Collection] = {}
 
     def __len__(self) -> int:
         with closing(self.connection.execute('''
@@ -206,9 +207,13 @@ class Connection(ConnectionWrapper, MutableMapping[str, Collection]):
         """
         Get a collection by name.
         """
-        if not table_name_re.match(name):
-            raise ValueError(f'incorrect table name: {name}')
-        return Collection(self.connection, name, self.dumps, self.loads)
+        collection = self.cache.get(name)
+        if collection is None:
+            if not table_name_re.match(name):
+                raise ValueError(f'incorrect collection name: {name}, must follow the rule `{table_name_re}`')
+            collection = Collection(self.connection, name, self.dumps, self.loads)
+            self.cache[name] = collection
+        return collection
 
     def __setitem__(self, name: str, value: Collection) -> None:
         raise TypeError('setting an entire collection is not supported')
@@ -224,6 +229,9 @@ class Connection(ConnectionWrapper, MutableMapping[str, Collection]):
                 cursor.execute(f'DROP TABLE "{name}"')
         except sqlite3.OperationalError as e:
             raise KeyError(name) from e
+        else:
+            # Throw away cached `Collection` instance.
+            self.cache.pop(name, None)
 
     def close(self):
         """

@@ -32,6 +32,11 @@ def test_getitem(connection: Connection, name: str):
     connection.get(name)
 
 
+def test_getitem_cache(connection: Connection):
+    assert connection['foo'] is connection['foo']
+    assert connection['foo'] is not connection['bar']
+
+
 @mark.parametrize('name', bad_table_names)
 def test_getitem_value_error(connection: Connection, name: str):
     with raises(ValueError):
@@ -47,6 +52,12 @@ def test_delitem_value_error(connection: Connection, name: str):
 def test_delitem_missing(connection: Connection):
     with raises(KeyError):
         del connection['missing']
+
+
+def test_delitem_cache(connection: Connection):
+    collection = connection['foo']
+    del connection['foo']
+    assert connection['foo'] is not collection
 
 
 def test_connection_setitem(connection: Connection):
