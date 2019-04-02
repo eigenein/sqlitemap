@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='sqlitemap',
-    version='0.1.1',
+    version='0.2.0',
     description='Dictionary interface to an SQLite database',
     long_description=Path('README.md').read_text(encoding='utf-8'),
     long_description_content_type='text/markdown',
